@@ -1,0 +1,24 @@
+language: python
+python:
+  - "3.6"
+
+install:
+  - pip install -r requirements-dev.txt
+
+script:
+  - make check coverage
+
+after_success:
+  - pip install codecov
+  - codecov
+
+deploy:
+  provider: pypi
+  user: luizalabs
+  distributions: "sdist bdist_wheel"
+  password:
+    secure: 
+  on:
+    tags: true
+    repo: luizalabs/asyncio-toolkit
+  skip_cleanup: true
