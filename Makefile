@@ -10,7 +10,7 @@ clean: ## Clean cache and temporary files
 	@rm -rf *.egg-info
 	@rm -f .coverage
 
-check:  ## Run static code checks
+lint:  ## Run static code checks
 	@flake8 .
 	@isort --check
 

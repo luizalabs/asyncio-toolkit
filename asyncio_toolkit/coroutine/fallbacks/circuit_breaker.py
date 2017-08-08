@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -60,9 +59,7 @@ class CircuitBreaker:
                 self.open_circuit()
 
                 logger.info(
-                    'Max failures exceeded by: {}'.format(
-                        self.failure_cache_key
-                    )
+                    'Max failures exceeded by: {}'.format(self.failure_cache_key)
                 )
 
                 raise self.max_failure_exception
