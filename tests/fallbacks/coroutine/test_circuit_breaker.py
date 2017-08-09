@@ -1,7 +1,9 @@
+from asyncio_toolkit.fallbacks.coroutine.circuit_breaker import (
+    CorotuineCircuitBreaker
+)
+
 import pytest
 from werkzeug.contrib.cache import SimpleCache
-
-from asyncio_toolkit.fallbacks.coroutine.circuit_breaker import CorotuineCircuitBreaker
 
 cache = SimpleCache()
 
