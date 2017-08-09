@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CorotuineCircuitBreaker:
+class CoroutineCircuitBreaker:
 
     def __init__(
         self,
@@ -67,7 +67,11 @@ class CorotuineCircuitBreaker:
                 raise self.max_failure_exception
 
     def _increase_failure_count(self):
-        self.cache.add(self.failure_cache_key, 0, self.max_failure_timeout)
+        self.cache.add(
+            self.failure_cache_key,
+            0,
+            self.max_failure_timeout
+        )
         total = self.cache.inc(self.failure_cache_key)
 
         logger.info(
