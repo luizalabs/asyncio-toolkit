@@ -1,7 +1,8 @@
 import pytest
 from werkzeug.contrib.cache import SimpleCache
 
-from asyncio_toolkit.fallbacks.coroutine.circuit_breaker import CorotuineCircuitBreaker
+from asyncio_toolkit.fallbacks.coroutine.circuit_breaker import \
+    CoroutineCircuitBreaker
 
 cache = SimpleCache()
 
@@ -21,7 +22,7 @@ def fail_function():
 class TestCircuitBreaker:
 
     def test_success_result(self):
-        with CorotuineCircuitBreaker(
+        with CoroutineCircuitBreaker(
             cache=cache,
             failure_cache_key='success',
             max_failures=1,
@@ -32,7 +33,7 @@ class TestCircuitBreaker:
 
     def test_should_raise_error_when_max_failures_is_exceeded(self):
         with pytest.raises(MyException):
-            with CorotuineCircuitBreaker(
+            with CoroutineCircuitBreaker(
                 cache=cache,
                 failure_cache_key='fail',
                 max_failures=0,
@@ -47,7 +48,7 @@ class TestCircuitBreaker:
         cache.set(failure_cache_key, 171)
 
         with pytest.raises(ValueError):
-            with CorotuineCircuitBreaker(
+            with CoroutineCircuitBreaker(
                 cache=cache,
                 failure_cache_key=failure_cache_key,
                 max_failures=5000,
@@ -64,7 +65,7 @@ class TestCircuitBreaker:
         cache.set(failure_cache_key, 1)
 
         with pytest.raises(MyException):
-            with CorotuineCircuitBreaker(
+            with CoroutineCircuitBreaker(
                 cache=cache,
                 failure_cache_key=failure_cache_key,
                 max_failures=2,
@@ -81,7 +82,7 @@ class TestCircuitBreaker:
         cache.set('circuit_circuit_open', True)
 
         with pytest.raises(MyException):
-            with CorotuineCircuitBreaker(
+            with CoroutineCircuitBreaker(
                 cache=cache,
                 failure_cache_key='circuit_open',
                 max_failures=10,
@@ -101,7 +102,7 @@ class TestCircuitBreaker:
         max_failures = 10
 
         with pytest.raises(MyException):
-            with CorotuineCircuitBreaker(
+            with CoroutineCircuitBreaker(
                 cache=cache,
                 failure_cache_key=failure_cache_key,
                 max_failures=max_failures,
