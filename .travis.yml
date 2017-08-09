@@ -6,7 +6,7 @@ install:
   - pip install -r requirements-dev.txt
 
 script:
-  - make check coverage
+  - make lint coverage
 
 after_success:
   - pip install codecov
