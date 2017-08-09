@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CircuitBreaker:
+class CorotuineCircuitBreaker:
 
     def __init__(
         self,
