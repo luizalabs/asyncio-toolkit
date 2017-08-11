@@ -15,10 +15,10 @@ lint:  ## Run static code checks
 	@isort --check
 
 test: clean ## Run unit tests
-	@py.test -x tests/
+	@py.test -xs tests/
 
 coverage:  ## Run unit tests and generate code coverage report
-	@py.test -x --cov asyncio_toolkit/ --cov-report=xml --cov-report=term-missing tests/
+	@py.test -xs --cov asyncio_toolkit/ --cov-report=xml --cov-report=term-missing tests/
 
 install:  ## Install development dependencies
 	@pip install -r requirements-dev.txt
