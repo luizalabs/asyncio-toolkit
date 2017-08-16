@@ -1,8 +1,9 @@
 import pytest
 from werkzeug.contrib.cache import SimpleCache
 
-from asyncio_toolkit.circuit_breaker.context_manager import \
+from asyncio_toolkit.circuit_breaker.context_manager import (
     CircuitBreaker as SimpleCircuitBreaker
+)
 
 from .helpers import MyException
 
