@@ -37,3 +37,6 @@ PHONY: release-major
 # target: release-major - Release a major version
 release-major:
 	bumpversion major
+
+packaging: # publish
+	python setup.py sdist bdist_wheel upload -r pypi
