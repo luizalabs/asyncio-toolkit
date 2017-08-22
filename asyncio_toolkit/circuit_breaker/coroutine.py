@@ -43,13 +43,15 @@ class circuit_breaker(BaseCircuitBreaker):
     @property
     @asyncio.coroutine
     def is_circuit_open(self):
-        is_open = yield from self.storage.get(self.circuit_key) or False
+        is_open = yield from self.storage.get(
+            self.circuit_key.encode('utf-8')
+        ) or False
         return is_open
 
     @asyncio.coroutine
     def open_circuit(self):
         yield from self.storage.set(
-            self.circuit_key,
+            self.circuit_key.encode('utf-8'),
             bytes(True),
             self.circuit_timeout
         )
