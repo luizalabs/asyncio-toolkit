@@ -22,3 +22,18 @@ coverage:  ## Run unit tests and generate code coverage report
 
 install:  ## Install development dependencies
 	@pip install -r requirements-dev.txt
+
+PHONY: release-patch
+# target: release-patch - Release a patch version
+release-patch:
+	bumpversion patch
+
+PHONY: release-minor
+# target: release-minor - Release a minor version
+release-minor:
+	bumpversion minor
+
+PHONY: release-major
+# target: release-major - Release a major version
+release-major:
+	bumpversion major
