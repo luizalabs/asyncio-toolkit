@@ -86,4 +86,7 @@ class circuit_breaker(BaseCircuitBreaker):
                         )
 
                         raise self.max_failure_exception
+                else:
+                    raise e
+
         return wrapper
