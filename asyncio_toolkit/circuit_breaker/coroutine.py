@@ -38,7 +38,7 @@ class circuit_breaker(BaseCircuitBreaker):
             )
         )
 
-        return (yield from self.storage.get(key) or 0)
+        return int((yield from self.storage.get(key) or 0))
 
     @property
     @asyncio.coroutine

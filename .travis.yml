@@ -5,6 +5,9 @@ python:
 install:
   - pip install -r requirements-dev.txt
 
+services:
+  - memcached
+
 script:
   - make lint test
 

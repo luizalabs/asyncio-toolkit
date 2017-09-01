@@ -5,11 +5,9 @@ import pytest
 
 @pytest.fixture(scope='session')
 def loop():
-    # Set-up
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    return asyncio.get_event_loop()
 
-    loop.run_until_complete()
 
-    # Clean-up
-    loop.close()
+@pytest.fixture
+def run_sync(loop):
+    return loop.run_until_complete

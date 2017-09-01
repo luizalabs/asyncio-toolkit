@@ -28,7 +28,7 @@ class Clazz:
         catch_exceptions=None,
     )
     @asyncio.coroutine
-    def success_function(cls):
+    def success_example(cls):
         return True
 
     @classmethod
@@ -37,72 +37,53 @@ class Clazz:
         failure_key=failure_key,
         max_failures=max_failures,
         max_failure_exception=MyException,
+        max_failure_timeout=10,
+        circuit_timeout=10,
         catch_exceptions=(ValueError,),
     )
     @asyncio.coroutine
-    def fail_function(cls):
+    def fail_example(cls):
         raise ValueError()
 
 
 class TestCoroutineCircuitBreaker:
 
-    @pytest.mark.async
-    @asyncio.coroutine
-    def test_success_result(self):
-        yield from Clazz.success_function()
+    def _set_failure_count(self, run_sync, count):
+        run_sync(simple_storage.flush_all())
+        run_sync(simple_storage.add(
+            failure_key.encode('utf-8'),
+            str(count).encode('utf-8'),
+            60
+        ))
 
-    @pytest.mark.async
-    @asyncio.coroutine
-    def test_should_raise_error_when_max_failures_is_exceeded(self):
+    def _get_failure_count(self, run_sync, key):
+        return int(run_sync(simple_storage.get(key.encode('utf-8'))))
+
+    def test_error_is_raised_when_max_failures_exceeds_max_value(
+        self, run_sync
+    ):
+        self._set_failure_count(run_sync, max_failures + 1)
         with pytest.raises(MyException):
-            yield from Clazz.fail_function()
+            run_sync(Clazz.fail_example())
 
-    @pytest.mark.async
-    @asyncio.coroutine
-    def test_should_increase_fail_storage_count(self):
-        yield from simple_storage.set(failure_key, 171)
-
-        with pytest.raises(ValueError):
-            yield from Clazz.fail_function()
-
-        count = yield from simple_storage.get(failure_key)
-        assert count == 172
-
-    @pytest.mark.async
-    @asyncio.coroutine
-    def test_should_open_circuit_when_max_failures_exceeds(self):
-        yield from simple_storage.set(failure_key, 1)
+    def test_failure_increases_count_on_storage(self, run_sync):
+        self._set_failure_count(run_sync, max_failures - 1)
 
         with pytest.raises(MyException):
-            yield from Clazz.fail_function()
+            run_sync(Clazz.fail_example())
 
-            assert circuit_breaker.is_circuit_open
+        count = self._get_failure_count(run_sync, failure_key)
+        assert count == max_failures
 
-        assert (yield from simple_storage.get(failure_key)) == 2
-
-    @pytest.mark.async
-    @asyncio.coroutine
-    def test_should_raise_exception_when_circuit_is_open(self):
-        yield from simple_storage.set('circuit_failure_key', True)
-
-        with pytest.raises(MyException):
-            yield from Clazz.success_function()
-
-            assert circuit_breaker.is_circuit_open
-
-    @pytest.mark.async
-    @asyncio.coroutine
-    def test_should_not_increment_fail_when_circuit_is_open(self):
-        """
-        It should not increment fail count over the max failures limit, when
-        circuit breaker is open after a successful enter.
-        """
-        max_failures = 10
-
-        yield from simple_storage.set(failure_key, max_failures)
+    def test_should_not_increment_fail_when_circuit_is_open(self, run_sync):
+        self._set_failure_count(run_sync, 999)
+        run_sync(simple_storage.set(
+            'circuit_{}'.format(failure_key).encode('utf-8'),
+            b'{"py/bytes": "=00"}'
+        ))
 
         with pytest.raises(MyException):
-            circuit_breaker.open_circuit()
-            yield from Clazz.fail_function()
+            run_sync(Clazz.fail_example())
 
-        assert (yield from simple_storage.get(failure_key)) == max_failures
+        count = self._get_failure_count(run_sync, failure_key)
+        assert count == 999
