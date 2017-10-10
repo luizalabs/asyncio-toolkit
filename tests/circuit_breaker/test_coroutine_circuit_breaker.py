@@ -21,6 +21,12 @@ class TestCoroutineCircuitBreaker:
             '127.0.0.1', 11211,
             loop=asyncio.get_event_loop()
         )
+    
+    @pytest.fixture
+    def redis(self, run_sync):
+        return run_sync(
+            aioredis.create_redis(('127.0.0.1', 6379))
+        )
 
     @pytest.fixture
     def fail_example(self, memcached):
@@ -56,9 +62,10 @@ class TestCoroutineCircuitBreaker:
         return fn
 
     def _set_failure_count(self, stored, run_sync, count):
-        run_sync(stored.flush_all())
+        key = failure_key.encode('utf-8')
+        run_sync(stored.delete(key))
         run_sync(stored.add(
-            failure_key.encode('utf-8'),
+            key,
             str(count).encode('utf-8'),
             60
         ))
@@ -69,6 +76,7 @@ class TestCoroutineCircuitBreaker:
     @pytest.mark.parametrize('store_fixture', 
         [
             ('memcached'),
+            ('redis')
         ]
     )
     def test_error_is_raised_when_max_failures_exceeds_max_value(
@@ -86,6 +94,7 @@ class TestCoroutineCircuitBreaker:
     @pytest.mark.parametrize('store_fixture', 
         [
             ('memcached'),
+            ('redis')
         ]
     )
     def test_failure_increases_count_on_storage(
@@ -107,6 +116,7 @@ class TestCoroutineCircuitBreaker:
     @pytest.mark.parametrize('store_fixture', 
         [
             ('memcached'),
+            ('redis')
         ]
     )
     def test_should_not_increment_fail_when_circuit_is_open(
