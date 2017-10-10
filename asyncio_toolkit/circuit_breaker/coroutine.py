@@ -65,11 +65,11 @@ class circuit_breaker(BaseCircuitBreaker):
     def __call__(self, method):
         @asyncio.coroutine
         @wraps(method)
-        def wrapper(obj, *args, **kwargs):
+        def wrapper(*args, **kwargs):
             yield from self._check_circuit()
 
             try:
-                return (yield from method(obj, *args, **kwargs))
+                return (yield from method(*args, **kwargs))
             except Exception as e:
                 if self._is_catchable(e):
                     yield from self._check_circuit()

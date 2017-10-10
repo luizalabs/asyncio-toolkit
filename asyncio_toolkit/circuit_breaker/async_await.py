@@ -57,11 +57,11 @@ class circuit_breaker(BaseCircuitBreaker):
 
     def __call__(self, method):
         @wraps(method)
-        async def wrapper(obj, *args, **kwargs):
+        async def wrapper(*args, **kwargs):
             await self._check_circuit()
 
             try:
-                return (await method(obj, *args, **kwargs))
+                return (await method(*args, **kwargs))
             except Exception as e:
                 if self._is_catchable(e):
                     await self._check_circuit()
