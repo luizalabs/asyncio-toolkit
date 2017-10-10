@@ -1,9 +1,10 @@
 import asyncio
-import aioredis
 
-import aiomcache
 import pytest
 
+from asyncio_toolkit.circuit_breaker.async_await import (
+    circuit_breaker as async_circuit_breaker
+)
 from asyncio_toolkit.circuit_breaker.coroutine import circuit_breaker
 
 from .helpers import MyException
@@ -13,17 +14,75 @@ max_failures = 10
 failure_key = 'fail'
 
 
+def set_failure_count_memcached(request, count):
+    storage = request.getfuncargvalue('memcached')
+    run_sync = request.getfuncargvalue('run_sync')
+    key = failure_key
+    run_sync(storage.delete(key))
+    run_sync(storage.add(
+        key,
+        count,
+        60
+    ))
+
+
+def set_failure_count_redis(request, count):
+    storage = request.getfuncargvalue('redis')
+    run_sync = request.getfuncargvalue('run_sync')
+    key = failure_key
+    run_sync(storage.delete(key))
+    run_sync(storage.set(
+        key,
+        count,
+        ttl=60
+    ))
+
+
+def get_failure_count_memcached(request, run_sync):
+    key = failure_key
+    storage = request.getfuncargvalue('memcached')
+    return int(run_sync(storage.get(key)))
+
+
+def get_failure_count_redis(request, run_sync):
+    key = failure_key
+    storage = request.getfuncargvalue('redis')
+    return int(run_sync(storage.get(key)))
+
+
 class TestCoroutineCircuitBreaker:
 
     @pytest.fixture
-    def memcached(self):
-        return aiomcache.Client(
-            '127.0.0.1', 11211,
-            loop=asyncio.get_event_loop()
-        )
+    def flush_cache(self, memcached, redis, run_sync):
+        run_sync(redis.clear())
+        run_sync(memcached.clear())
 
     @pytest.fixture
-    def fail_example(self, memcached):
+    def open_circuit(self, memcached, redis, run_sync):
+        key = 'circuit_{}'.format(failure_key)
+        run_sync(memcached.set(key, 1))
+        run_sync(redis.set(key, 1))
+
+    @pytest.fixture
+    def fail_example_async(self, memcached):
+
+        @async_circuit_breaker(
+            storage=memcached,
+            failure_key=failure_key,
+            max_failures=max_failures,
+            max_failure_exception=MyException,
+            max_failure_timeout=10,
+            circuit_timeout=10,
+            catch_exceptions=(ValueError,),
+        )
+        @asyncio.coroutine
+        def fn():
+            raise ValueError()
+
+        return fn
+
+    @pytest.fixture
+    def fail_example_memcached(self, memcached):
 
         @circuit_breaker(
             storage=memcached,
@@ -40,91 +99,106 @@ class TestCoroutineCircuitBreaker:
 
         return fn
 
-    def success_example(self, memcached):
+    @pytest.fixture
+    def fail_example_redis(self, redis):
 
         @circuit_breaker(
-            storage=memcached,
+            storage=redis,
             failure_key=failure_key,
             max_failures=max_failures,
-            max_failure_exception=None,
-            catch_exceptions=None,
+            max_failure_exception=MyException,
+            max_failure_timeout=10,
+            circuit_timeout=10,
+            catch_exceptions=(ValueError,),
         )
         @asyncio.coroutine
         def fn():
-            return True
+            raise ValueError()
 
         return fn
 
-    def _set_failure_count(self, stored, run_sync, count):
-        run_sync(stored.flush_all())
-        run_sync(stored.add(
-            failure_key.encode('utf-8'),
-            str(count).encode('utf-8'),
-            60
-        ))
-
-    def _get_failure_count(self, stored, run_sync, key):
-        return int(run_sync(stored.get(key.encode('utf-8'))))
-
-    @pytest.mark.parametrize('store_fixture', 
+    @pytest.mark.parametrize(
+        'fail_example_fixture,set_failure_count',
         [
-            ('memcached'),
+            ('fail_example_async', set_failure_count_memcached),
+            ('fail_example_memcached', set_failure_count_memcached),
+            ('fail_example_redis', set_failure_count_redis),
         ]
     )
     def test_error_is_raised_when_max_failures_exceeds_max_value(
         self,
         request,
-        store_fixture,
+        fail_example_fixture,
+        set_failure_count,
         run_sync,
-        fail_example
+        flush_cache
     ):
-        store = request.getfuncargvalue(store_fixture)
-        self._set_failure_count(store, run_sync, max_failures + 1)
+        fail_example = request.getfuncargvalue(fail_example_fixture)
+        set_failure_count(request, max_failures + 1)
         with pytest.raises(MyException):
             run_sync(fail_example())
 
-    @pytest.mark.parametrize('store_fixture', 
+    @pytest.mark.parametrize(
+        'fail_example_fixture,set_failure_count,get_failure_count',
         [
-            ('memcached'),
+            ('fail_example_async',
+             set_failure_count_memcached, get_failure_count_memcached),
+
+            ('fail_example_memcached',
+             set_failure_count_memcached, get_failure_count_memcached),
+
+            ('fail_example_redis',
+             set_failure_count_redis, get_failure_count_redis),
         ]
     )
     def test_failure_increases_count_on_storage(
         self,
         request,
-        store_fixture,
+        fail_example_fixture,
+        set_failure_count,
+        get_failure_count,
         run_sync,
-        fail_example
+        flush_cache
     ):
-        store = request.getfuncargvalue(store_fixture)
-        self._set_failure_count(store, run_sync, max_failures - 1)
+        fail_example = request.getfuncargvalue(fail_example_fixture)
+
+        set_failure_count(request, max_failures - 1)
+        count = get_failure_count(request, run_sync)
 
         with pytest.raises(MyException):
             run_sync(fail_example())
 
-        count = self._get_failure_count(store, run_sync, failure_key)
+        count = get_failure_count(request, run_sync)
         assert count == max_failures
 
-    @pytest.mark.parametrize('store_fixture', 
+    @pytest.mark.parametrize(
+        'fail_example_fixture,set_failure_count,get_failure_count',
         [
-            ('memcached'),
+            ('fail_example_memcached',
+             set_failure_count_memcached, get_failure_count_memcached),
+
+            ('fail_example_async',
+             set_failure_count_memcached, get_failure_count_memcached),
+
+            ('fail_example_redis',
+             set_failure_count_redis, get_failure_count_redis),
         ]
     )
     def test_should_not_increment_fail_when_circuit_is_open(
         self,
         request,
-        store_fixture,
+        fail_example_fixture,
+        set_failure_count,
+        get_failure_count,
         run_sync,
-        fail_example
+        flush_cache,
+        open_circuit,
     ):
-        store = request.getfuncargvalue(store_fixture)
-        self._set_failure_count(store, run_sync, 999)
-        run_sync(store.set(
-            'circuit_{}'.format(failure_key).encode('utf-8'),
-            b'{"py/bytes": "=00"}'
-        ))
+        fail_example = request.getfuncargvalue(fail_example_fixture)
+        set_failure_count(request, 999)
 
         with pytest.raises(MyException):
             run_sync(fail_example())
 
-        count = self._get_failure_count(store, run_sync, failure_key)
+        count = get_failure_count(request, run_sync)
         assert count == 999
