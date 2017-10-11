@@ -8,3 +8,4 @@ pytest==3.2.0
 werkzeug==0.12.2
 aiocache==0.7.2
 aiomcache==0.3.0
+aioredis==0.3.3
