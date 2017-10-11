@@ -24,3 +24,9 @@ class CircuitBreakerBaseStorage(metaclass=abc.ABCMeta):
         """
         This method must add a key with an int value and set a ttl to it
         """
+
+    @abc.abstractmethod
+    def add(self, key, value, timeout):
+        """
+        This method must add a key with an int value and set a ttl to it
+        """
