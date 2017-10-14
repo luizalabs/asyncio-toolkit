@@ -19,14 +19,8 @@ class circuit_breaker(BaseCircuitBreaker):
         getting a storage key from the storage engine.
         """
 
-        key = self.failure_key.encode('utf-8')
-
-        yield from self.storage.add(
-            key,
-            '0'.encode('utf-8'),
-            self.max_failure_timeout
-        )
-        total = yield from self.storage.incr(key)
+        key = self.failure_key
+        total = yield from self.storage.incr(key, self.max_failure_timeout)
 
         logger.info(
             'Increase failure for: {key} - '
@@ -38,21 +32,21 @@ class circuit_breaker(BaseCircuitBreaker):
             )
         )
 
-        return int((yield from self.storage.get(key) or 0))
+        return int(total or 0)
 
     @property
     @asyncio.coroutine
     def is_circuit_open(self):
         is_open = yield from self.storage.get(
-            self.circuit_key.encode('utf-8')
+            self.circuit_key
         ) or False
         return is_open
 
     @asyncio.coroutine
     def open_circuit(self):
         yield from self.storage.set(
-            self.circuit_key.encode('utf-8'),
-            bytes(True),
+            self.circuit_key,
+            1,
             self.circuit_timeout
         )
 

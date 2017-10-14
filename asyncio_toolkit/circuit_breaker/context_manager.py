@@ -15,7 +15,7 @@ class CircuitBreaker(BaseCircuitBreaker):
         This method demands that the implementation is responsible for
         getting a storage key from the storage engine.
         """
-        total = self.storage.incr(self.failure_key)
+        total = self.storage.incr(self.failure_key, self.max_failure_timeout)
 
         logger.info(
             'Increase failure for: {key} - '
@@ -27,7 +27,7 @@ class CircuitBreaker(BaseCircuitBreaker):
             )
         )
 
-        return self.storage.get(self.failure_key) or 0
+        return int(total or 0)
 
     @property
     def is_circuit_open(self):
