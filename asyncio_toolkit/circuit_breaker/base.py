@@ -1,6 +1,8 @@
 import abc
 import logging
 
+from .storage import CircuitBreakerStorageAdapter
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +25,7 @@ class BaseCircuitBreaker(metaclass=abc.ABCMeta):
         circuit_timeout=None,
         catch_exceptions=None
     ):
-        self.storage = storage
+        self.storage = CircuitBreakerStorageAdapter(storage)
         self.failure_key = failure_key
         self.max_failure_timeout = max_failure_timeout
         self.circuit_timeout = circuit_timeout

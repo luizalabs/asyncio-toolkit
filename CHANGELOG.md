@@ -3,6 +3,10 @@ Asyncio-Toolkit Changelog
 
 ### [NEXT_RELEASE] 
 
+### Added
+
+* New support to redis as storage
+
 #### Fixed
 
 * Tests added to asyncio.coroutine style calls
