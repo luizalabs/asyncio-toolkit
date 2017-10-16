@@ -125,17 +125,20 @@ class RedisPoolStorageAdapter(CircuitBreakerBaseStorage):
 
 class CircuitBreakerStorageAdapter(CircuitBreakerBaseStorage):
 
+    STORAGES = {
+        SimpleCache: SimpleCacheStorageAdapter,
+        AiomClient: MemcachedStorageAdapter,
+        Redis: RedisStorageAdapter,
+        RedisPool: RedisPoolStorageAdapter
+    }
+
     def __init__(self, storage):
-        if type(storage) == SimpleCache:
-            self._storage = SimpleCacheStorageAdapter(storage)
-        elif type(storage) == AiomClient:
-            self._storage = MemcachedStorageAdapter(storage)
-        elif type(storage) == Redis:
-            self._storage = RedisStorageAdapter(storage)
-        elif type(storage) == RedisPool:
-            self._storage = RedisPoolStorageAdapter(storage)
-        else:
+        adapter = self.STORAGES.get(type(storage))
+
+        if not adapter:
             raise Exception('Invalid storaged: {}'.format(type(storage)))
+
+        self._storage = adapter(storage)
 
     def get(self, key):
         return self._storage.get(key)

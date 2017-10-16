@@ -1,7 +1,5 @@
 import asyncio
 
-import aiomcache
-import aioredis
 import pytest
 
 from asyncio_toolkit.circuit_breaker.async_await import (
@@ -53,27 +51,6 @@ def get_failure_count_redis(request, run_sync):
 
 
 class TestCoroutineCircuitBreaker:
-
-    @pytest.fixture
-    def memcached(self):
-        return aiomcache.Client(
-            '127.0.0.1', 11211,
-            loop=asyncio.get_event_loop()
-        )
-
-    @pytest.fixture
-    def redis(self, run_sync):
-        return run_sync(
-            aioredis.create_redis(('127.0.0.1', 6379))
-        )
-
-    @pytest.fixture
-    def redis_pool(self, run_sync):
-        return run_sync(
-            aioredis.create_pool(
-                ('127.0.0.1', 6379), minsize=5, maxsize=10
-            )
-        )
 
     @pytest.fixture
     def flush_cache(self, memcached, redis, run_sync):

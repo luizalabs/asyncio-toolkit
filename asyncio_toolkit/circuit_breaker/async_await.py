@@ -24,6 +24,3 @@ class circuit_breaker(coroutine_circuit_breaker):
 
     async def _check_circuit(self):
         await super()._check_circuit()
-
-    def __call__(self, method):
-        return super().__call__(method)

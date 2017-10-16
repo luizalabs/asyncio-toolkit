@@ -36,7 +36,7 @@ class CircuitBreaker(BaseCircuitBreaker):
     def open_circuit(self):
         self.storage.set(
             self.circuit_key,
-            True,
+            1,
             self.circuit_timeout
         )
 
