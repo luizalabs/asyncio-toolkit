@@ -13,12 +13,6 @@ class circuit_breaker(coroutine_circuit_breaker):
     async def increment(self):
         return await super().increment()
 
-    @property
-    async def is_circuit_open(self):
-        return (
-            await super().is_circuit_open
-        )
-
     async def open_circuit(self):
         await super().open_circuit()
 
