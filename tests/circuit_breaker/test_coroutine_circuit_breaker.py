@@ -41,13 +41,13 @@ def set_failure_count_redis(request, count):
 def get_failure_count_memcached(request, run_sync):
     key = failure_key
     storage = request.getfuncargvalue('memcached')
-    return int(run_sync(storage.get(key)))
+    return int(run_sync(storage.get(key) or 0))
 
 
 def get_failure_count_redis(request, run_sync):
     key = failure_key
     storage = request.getfuncargvalue('redis')
-    return int(run_sync(storage.get(key)))
+    return int(run_sync(storage.get(key) or 0))
 
 
 class TestCoroutineCircuitBreaker:
