@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name='luizalabs-asyncio-toolkit',
-    version='0.2.0',
+    version='0.2.1',
     description=(
         'The LuizaLabs set of tools '
         'to ease asyncio development'
