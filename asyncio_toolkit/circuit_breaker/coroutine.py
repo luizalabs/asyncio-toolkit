@@ -77,6 +77,8 @@ class circuit_breaker(BaseCircuitBreaker):
                             )
                         )
 
+                        yield from self.storage.delete(self.failure_key)
+
                         raise self.max_failure_exception
                 else:
                     raise e

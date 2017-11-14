@@ -1,7 +1,13 @@
 Asyncio-Toolkit Changelog
 ==============
 
-### [NEXT_RELEASE] ### [0.2.0] - 2017-10-18 
+### [NEXT_RELEASE]
+
+#### Fixed
+
+* deleting cache number of failures when opening circuit breaker
+
+### [0.2.0] - 2017-10-18 
 
 ### Added
 
