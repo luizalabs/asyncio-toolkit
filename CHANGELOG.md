@@ -1,7 +1,13 @@
 Asyncio-Toolkit Changelog
 ==============
 
-### [NEXT_RELEASE] ### [0.2.1] - 2017-11-14
+### [NEXT_RELEASE]
+
+#### Fixed
+
+* correction in the circuit breaker opening log
+
+### [0.2.1] - 2017-11-14
 
 #### Fixed
 
