@@ -59,20 +59,16 @@ class BaseCircuitBreaker(metaclass=abc.ABCMeta):
             exc in self.catch_exceptions
             for exc in [type(exception), exception]
         )
+
         logger.debug('Testing if {} is catcheable:{}'.format(
             type(exception),
             is_catchable
         ))
+
         return is_catchable
 
     def _exceeded_max_failures(self, total_failures):
         return total_failures >= self.max_failures
 
     def _raise_openess(self):
-        logger.critical(
-            'Open circuit for {failure_key} {cicuit_storage_key}'.format(
-                failure_key=self.failure_key,
-                cicuit_storage_key=self.circuit_key
-            )
-        )
         raise self.max_failure_exception

@@ -35,17 +35,18 @@ class circuit_breaker(BaseCircuitBreaker):
     @property
     @asyncio.coroutine
     def is_circuit_open(self):
-        is_open = yield from self.storage.get(
-            self.circuit_key
-        ) or False
-        return is_open
+        return (yield from self.storage.get(self.circuit_key)) or False
 
     @asyncio.coroutine
     def open_circuit(self):
-        yield from self.storage.set(
-            self.circuit_key,
-            1,
-            self.circuit_timeout
+        yield from self.storage.set(self.circuit_key, 1, self.circuit_timeout)
+        yield from self.storage.delete(self.failure_key)
+
+        logger.critical(
+            'Open circuit for {failure_key} {cicuit_storage_key}'.format(
+                failure_key=self.failure_key,
+                cicuit_storage_key=self.circuit_key
+            )
         )
 
     @asyncio.coroutine
@@ -76,8 +77,6 @@ class circuit_breaker(BaseCircuitBreaker):
                                 self.failure_key
                             )
                         )
-
-                        yield from self.storage.delete(self.failure_key)
 
                         raise self.max_failure_exception
                 else:
