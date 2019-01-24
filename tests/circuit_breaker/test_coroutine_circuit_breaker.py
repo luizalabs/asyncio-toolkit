@@ -202,3 +202,23 @@ class TestCoroutineCircuitBreaker:
 
         count = get_failure_count(request, run_sync)
         assert count == 999
+
+    @pytest.mark.parametrize(
+        'fail_example_fixture,set_failure_count',
+        [
+            ('fail_example_async', set_failure_count_memcached),
+            ('fail_example_memcached', set_failure_count_memcached),
+            ('fail_example_redis', set_failure_count_redis),
+        ]
+    )
+    def test_catched_error_is_raised_when_max_failures_are_not_exceeded(
+        self,
+        request,
+        fail_example_fixture,
+        set_failure_count,
+        run_sync,
+        flush_cache
+    ):
+        fail_example = request.getfuncargvalue(fail_example_fixture)
+        with pytest.raises(ValueError):
+            run_sync(fail_example())
