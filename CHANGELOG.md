@@ -1,7 +1,7 @@
 Asyncio-Toolkit Changelog
 ==============
 
-### [NEXT_RELEASE] 
+### [NEXT_RELEASE] ### [0.2.3] - 2019-01-24 
 #### Fixed
 * raise catchable exception
 
