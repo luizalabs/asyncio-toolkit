@@ -1,8 +1,16 @@
 Asyncio-Toolkit Changelog
-==============
+=========================
 
-### [NEXT_RELEASE] ### [0.2.3] - 2019-01-24 
+### [NEXT_RELEASE]
+
+#### Updated
+
+* aiocache version
+
+### [0.2.3] - 2019-01-24
+
 #### Fixed
+
 * raise catchable exception
 
 ### [0.2.2] - 2017-11-16
@@ -17,7 +25,7 @@ Asyncio-Toolkit Changelog
 
 * deleting cache number of failures when opening circuit breaker
 
-### [0.2.0] - 2017-10-18 
+### [0.2.0] - 2017-10-18
 
 ### Added
 
@@ -27,7 +35,7 @@ Asyncio-Toolkit Changelog
 
 * Tests added to asyncio.coroutine style calls
 
-### [0.1.2] - 2017-08-29 
+### [0.1.2] - 2017-08-29
 
 #### Fixed
 
