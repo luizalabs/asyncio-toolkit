@@ -17,6 +17,9 @@ lint:  ## Run static code checks
 test: clean ## Run unit tests
 	@py.test -xs tests/
 
+test-matching: clean ## Search and run unit test
+	@py.test -xs tests/ -k $(Q)
+
 coverage:  ## Run unit tests and generate code coverage report
 	@py.test -xs --cov asyncio_toolkit/ --cov-report=xml --cov-report=term-missing tests/
 

@@ -1,4 +1,5 @@
 import asyncio
+from unittest import mock
 
 import pytest
 
@@ -10,7 +11,7 @@ from asyncio_toolkit.circuit_breaker.coroutine import circuit_breaker
 from .helpers import MyException
 
 max_failures = 10
-
+max_failure_timeout = 8
 failure_key = 'fail'
 
 
@@ -71,7 +72,7 @@ class TestCoroutineCircuitBreaker:
             failure_key=failure_key,
             max_failures=max_failures,
             max_failure_exception=MyException,
-            max_failure_timeout=10,
+            max_failure_timeout=max_failure_timeout,
             circuit_timeout=10,
             catch_exceptions=(ValueError,),
         )
@@ -89,7 +90,7 @@ class TestCoroutineCircuitBreaker:
             failure_key=failure_key,
             max_failures=max_failures,
             max_failure_exception=MyException,
-            max_failure_timeout=10,
+            max_failure_timeout=max_failure_timeout,
             circuit_timeout=10,
             catch_exceptions=(ValueError,),
         )
@@ -107,7 +108,7 @@ class TestCoroutineCircuitBreaker:
             failure_key=failure_key,
             max_failures=max_failures,
             max_failure_exception=MyException,
-            max_failure_timeout=10,
+            max_failure_timeout=max_failure_timeout,
             circuit_timeout=10,
             catch_exceptions=(ValueError,),
         )
@@ -141,14 +142,21 @@ class TestCoroutineCircuitBreaker:
     @pytest.mark.parametrize(
         'fail_example_fixture,set_failure_count,get_failure_count',
         [
-            ('fail_example_async',
-             set_failure_count_memcached, get_failure_count_memcached),
-
-            ('fail_example_memcached',
-             set_failure_count_memcached, get_failure_count_memcached),
-
-            ('fail_example_redis',
-             set_failure_count_redis, get_failure_count_redis),
+            (
+                'fail_example_async',
+                set_failure_count_memcached,
+                get_failure_count_memcached
+            ),
+            (
+                'fail_example_memcached',
+                set_failure_count_memcached,
+                get_failure_count_memcached
+            ),
+            (
+                'fail_example_redis',
+                set_failure_count_redis,
+                get_failure_count_redis
+            ),
         ]
     )
     def test_failure_increases_count_on_storage(
@@ -172,16 +180,124 @@ class TestCoroutineCircuitBreaker:
         assert count == 0
 
     @pytest.mark.parametrize(
+        'fail_example_fixture,set_failure_count,'
+        'get_failure_count,storage_type',
+        [
+            (
+                'fail_example_async',
+                set_failure_count_memcached,
+                get_failure_count_memcached,
+                'memcached'
+            ),
+            (
+                'fail_example_memcached',
+                set_failure_count_memcached,
+                get_failure_count_memcached,
+                'memcached'
+            ),
+            (
+                'fail_example_redis',
+                set_failure_count_redis,
+                get_failure_count_redis,
+                'redis'
+            ),
+        ]
+    )
+    def test_should_set_failure_key_timeout_on_first_increase_count(
+        self,
+        request,
+        fail_example_fixture,
+        set_failure_count,
+        get_failure_count,
+        storage_type,
+        run_sync,
+        flush_cache
+    ):
+        fail_example = request.getfuncargvalue(fail_example_fixture)
+        storage = request.getfuncargvalue(storage_type)
+
+        expire_mock = mock.Mock()
+        expire_mock.side_effect = asyncio.coroutine(
+            mock.Mock(name='CoroutineResult')
+        )
+        storage.expire = expire_mock
+
+        set_failure_count(request, 0)
+        with pytest.raises(ValueError):
+            run_sync(fail_example())
+
+        expire_mock.assert_called_once_with(
+            failure_key,
+            max_failure_timeout
+        )
+
+    @pytest.mark.parametrize(
+        'fail_example_fixture,set_failure_count,'
+        'get_failure_count,storage_type',
+        [
+            (
+                'fail_example_async',
+                set_failure_count_memcached,
+                get_failure_count_memcached,
+                'memcached'
+            ),
+            (
+                'fail_example_memcached',
+                set_failure_count_memcached,
+                get_failure_count_memcached,
+                'memcached'
+            ),
+            (
+                'fail_example_redis',
+                set_failure_count_redis,
+                get_failure_count_redis,
+                'redis'
+            ),
+        ]
+    )
+    def test_should_not_set_failure_key_timeout_after_first_increase_count(
+        self,
+        request,
+        fail_example_fixture,
+        set_failure_count,
+        get_failure_count,
+        storage_type,
+        run_sync,
+        flush_cache
+    ):
+        fail_example = request.getfuncargvalue(fail_example_fixture)
+        storage = request.getfuncargvalue(storage_type)
+
+        expire_mock = mock.Mock()
+        expire_mock.side_effect = asyncio.coroutine(
+            mock.Mock(name='CoroutineResult')
+        )
+        storage.expire = expire_mock
+
+        set_failure_count(request, 1)
+        with pytest.raises(ValueError):
+            run_sync(fail_example())
+
+        assert not expire_mock.called
+
+    @pytest.mark.parametrize(
         'fail_example_fixture,set_failure_count,get_failure_count',
         [
-            ('fail_example_memcached',
-             set_failure_count_memcached, get_failure_count_memcached),
-
-            ('fail_example_async',
-             set_failure_count_memcached, get_failure_count_memcached),
-
-            ('fail_example_redis',
-             set_failure_count_redis, get_failure_count_redis),
+            (
+                'fail_example_memcached',
+                set_failure_count_memcached,
+                get_failure_count_memcached
+            ),
+            (
+                'fail_example_async',
+                set_failure_count_memcached,
+                get_failure_count_memcached
+            ),
+            (
+                'fail_example_redis',
+                set_failure_count_redis,
+                get_failure_count_redis
+            ),
         ]
     )
     def test_should_not_increment_fail_when_circuit_is_open(

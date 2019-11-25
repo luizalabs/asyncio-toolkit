@@ -18,8 +18,20 @@ class circuit_breaker(BaseCircuitBreaker):
         This method demands that the implementation is responsible for
         getting a storage key from the storage engine.
         """
-
         total = yield from self.storage.increment(self.failure_key, 1)
+        if total == 1:
+            logger.debug(
+                'Starting failure window for: {key} - '
+                'timeout: {timeout}'.format(
+                    key=self.failure_key,
+                    timeout=self.max_failure_timeout
+                )
+            )
+            yield from self.storage.expire(
+                self.failure_key,
+                self.max_failure_timeout
+            )
+
         logger.info(
             'Increase failure for: {key} - '
             'max failures {max_failures} - '
