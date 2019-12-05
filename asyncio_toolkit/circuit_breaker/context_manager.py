@@ -16,6 +16,18 @@ class CircuitBreaker(BaseCircuitBreaker):
         getting a storage key from the storage engine.
         """
         total = self.storage.increment(self.failure_key)
+        if total == 1:
+            logger.debug(
+                'Starting failure window for: {key} - '
+                'timeout: {timeout}'.format(
+                    key=self.failure_key,
+                    timeout=self.max_failure_timeout
+                )
+            )
+            self.storage.expire(
+                self.failure_key,
+                self.max_failure_timeout
+            )
 
         logger.info(
             'Increase failure for: {key} - '

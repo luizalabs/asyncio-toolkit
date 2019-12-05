@@ -1,4 +1,5 @@
 import abc
+import time
 
 from werkzeug.contrib.cache import SimpleCache
 
@@ -27,13 +28,23 @@ class CircuitBreakerBaseStorage(metaclass=abc.ABCMeta):
         This method must add a key with an int value and set a ttl to it
         """
 
+    @abc.abstractmethod
+    def expire(self, key, timeout):
+        """
+        This method must set timeout for a given key
+        """
+
 
 class MemoryStorage(CircuitBreakerBaseStorage):
 
     def __init__(self):
         self._cache = SimpleCache()
+        self._timeout = {}
 
     def get(self, key):
+        timeout = self._timeout.get(key)
+        if timeout and timeout < time.time():
+            return None
         return self._cache.get(key)
 
     def increment(self, key):
@@ -41,3 +52,7 @@ class MemoryStorage(CircuitBreakerBaseStorage):
 
     def set(self, key, value, timeout):
         self._cache.set(key, value, timeout)
+
+    def expire(self, key, timeout):
+        if timeout:
+            self._timeout[key] = time.time() + timeout

@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from asyncio_toolkit.circuit_breaker.context_manager import (
@@ -21,7 +23,7 @@ class TestBaseCircuitBreaker:
     def default_timeout(self):
         return 60
 
-    def test_success_result(self, memory, ):
+    def test_success_result(self, memory):
         with SimpleCircuitBreaker(
             storage=memory,
             failure_key='success',
@@ -58,6 +60,54 @@ class TestBaseCircuitBreaker:
                 fail_function()
 
         assert memory.get(failure_key) == 172
+
+    def test_should_set_failure_key_timeout_on_first_increase_count(
+        self,
+        memory
+    ):
+        failure_key = 'fail_count'
+        max_failure_timeout = 4
+
+        memory.set(failure_key, 0, 10)
+        memory.expire = mock.Mock()
+        with pytest.raises(ValueError):
+            with SimpleCircuitBreaker(
+                storage=memory,
+                failure_key=failure_key,
+                max_failures=5000,
+                max_failure_exception=MyException,
+                max_failure_timeout=max_failure_timeout,
+                catch_exceptions=(ValueError,),
+            ):
+                fail_function()
+
+        assert memory.get(failure_key) == 1
+        memory.expire.assert_called_once_with(
+            failure_key,
+            max_failure_timeout
+        )
+
+    def test_should_not_set_failure_key_timeout_after_first_increase_count(
+        self,
+        memory
+    ):
+        failure_key = 'fail_count'
+
+        memory.set(failure_key, 1, 10)
+        memory.expire = mock.Mock()
+        with pytest.raises(ValueError):
+            with SimpleCircuitBreaker(
+                storage=memory,
+                failure_key=failure_key,
+                max_failures=5000,
+                max_failure_exception=MyException,
+                max_failure_timeout=4,
+                catch_exceptions=(ValueError,),
+            ):
+                fail_function()
+
+        assert memory.get(failure_key) == 2
+        assert not memory.expire.called
 
     def test_should_open_circuit_when_max_failures_exceeds(self, memory, default_timeout):
         failure_key = 'circuit'

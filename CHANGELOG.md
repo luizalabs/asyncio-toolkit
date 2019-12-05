@@ -7,6 +7,10 @@ Asyncio-Toolkit Changelog
 
 * aiocache version
 
+#### Fixed
+
+* timeout of failures counter
+
 ### [0.2.3] - 2019-01-24
 
 #### Fixed
