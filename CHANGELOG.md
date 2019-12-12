@@ -1,7 +1,7 @@
 Asyncio-Toolkit Changelog
 =========================
 
-### [NEXT_RELEASE]
+### [NEXT_RELEASE] ### [0.2.4] - 2019-12-12
 
 #### Updated
 
