@@ -1,7 +1,13 @@
 Asyncio-Toolkit Changelog
 =========================
 
-### [NEXT_RELEASE] ### [0.2.4] - 2019-12-12
+### [NEXT_RELEASE] 
+
+#### Fixed
+
+* Command to upload version to pypy
+
+### [0.2.4] - 2019-12-12
 
 #### Updated
 
