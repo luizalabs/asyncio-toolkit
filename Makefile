@@ -42,4 +42,7 @@ release-major:
 	bumpversion major
 
 packaging: # publish
-	python setup.py sdist bdist_wheel upload -r pypi
+	rm -rf dist/*
+	python setup.py sdist bdist_wheel
+	twine upload dist/* -r pypicloud
+
